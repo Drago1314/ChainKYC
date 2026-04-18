@@ -1,5 +1,7 @@
 # ⬡ ChainKYC — Blockchain-based Secure KYC Verification System
 
+![Ethereum](https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=Ethereum&logoColor=white) ![Solidity](https://img.shields.io/badge/Solidity-%23363636.svg?style=for-the-badge&logo=solidity&logoColor=white) ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
+
 > **6th Semester Mini Project** · Blockchain Technology · BE Computer Engineering  
 > Mumbai University · Academic Year 2025–26
 

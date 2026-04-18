@@ -51,7 +51,8 @@
     .badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(45,156,219,.3);}
     .badge-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
     /* CARDS */
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;position:relative;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.5rem;position:relative;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:transform 0.2s ease, box-shadow 0.2s ease;}
+    .card:hover{box-shadow:0 12px 32px rgba(0,0,0,0.3);transform:translateY(-2px);}
     .card-accent{border-left:3px solid var(--green);}.card-blue{border-left:3px solid var(--blue);}
     /* FORMS */
     .form-group{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1.15rem;}
