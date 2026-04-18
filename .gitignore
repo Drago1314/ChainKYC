@@ -1,0 +1,29 @@
+# Node dependencies
+node_modules/
+npm-debug.log
+
+# Hardhat
+chainkyc-hardhat/artifacts/
+chainkyc-hardhat/cache/
+chainkyc-hardhat/typechain-types/
+chainkyc-hardhat/coverage/
+chainkyc-hardhat/coverage.json
+chainkyc-hardhat/gasReporterOutput.json
+
+# Environment variables (Crucial - never push private keys to GitHub)
+.env
+.env.*
+!.env.example
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS Generated
+.DS_Store
+Thumbs.db
+
+# Project-specific generated outputs
+ChainKYC_Portable_*.zip
+*.zip

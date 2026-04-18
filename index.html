@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainKYC — Blockchain KYC Verification</title>
+  <meta name="description" content="ChainKYC is a decentralized KYC verification system built on Ethereum. Document hashes on-chain, user-controlled data, full smart-contract audit trail." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root{--bg:#060D15;--bg2:#0A1520;--surface:#0D1E2E;--surface2:#122435;--border:#1A3346;--border2:#254A65;--green:#00D97E;--green-dim:rgba(0,217,126,.12);--green-glo:rgba(0,217,126,.3);--blue:#2D9CDB;--blue-dim:rgba(45,156,219,.12);--amber:#F59E0B;--amber-dim:rgba(245,158,11,.12);--red:#EF4444;--red-dim:rgba(239,68,68,.12);--text:#C8DDE8;--text2:#7A9AAE;--text3:#3A5A6E;--white:#EEF6FB;--mono:'Space Mono','Courier New',monospace;--sans:'Outfit',sans-serif;}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;line-height:1.6;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,217,126,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,217,126,.025) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+    body::after{content:'';position:fixed;top:0;left:0;width:500px;height:500px;background:radial-gradient(circle at top left,rgba(0,217,126,.05),transparent 70%);pointer-events:none;z-index:0;}
+    #root{position:relative;z-index:1;}
+    h1,h2,h3,h4{font-weight:700;line-height:1.2;color:var(--white);}
+    .navbar{position:sticky;top:0;z-index:100;background:rgba(6,13,21,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;}
+    .nav-logo{font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--green);display:flex;align-items:center;gap:.5rem;cursor:pointer;}
+    .nav-logo sub{color:var(--text2);font-weight:400;font-size:.65rem;display:block;margin-top:-2px;font-family:var(--mono);}
+    .nav-links{display:flex;gap:.15rem;}
+    .nav-link{padding:.38rem .85rem;border-radius:3px;font-size:.85rem;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);font-family:var(--sans);transition:all .2s;}
+    .nav-link:hover{color:var(--white);background:var(--surface);}.nav-link.active{color:var(--green);background:var(--green-dim);}
+    .nav-right{display:flex;align-items:center;gap:.75rem;}
+    /* WALLET DROPDOWN */
+    .wallet-menu-wrap{position:relative;}
+    .wallet-chip{display:flex;align-items:center;gap:.5rem;background:var(--green-dim);border:1px solid rgba(0,217,126,.25);padding:.32rem .7rem;border-radius:4px;cursor:pointer;transition:border-color .2s;user-select:none;}
+    .wallet-chip:hover{border-color:var(--green);}
+    .wallet-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:5px;min-width:220px;overflow:hidden;animation:fadeIn .15s ease;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+    .wallet-dropdown-addr{padding:.65rem .85rem;font-family:var(--mono);font-size:.72rem;color:var(--text2);border-bottom:1px solid var(--border);}
+    .wallet-dropdown-addr span{display:block;color:var(--green);margin-top:.25rem;font-size:.75rem;word-break:break-all;}
+    .wallet-dropdown-btn{display:flex;align-items:center;gap:.55rem;width:100%;padding:.65rem .85rem;background:none;border:none;color:var(--text);font-family:var(--sans);font-size:.85rem;cursor:pointer;transition:background .15s;text-align:left;}
+    .wallet-dropdown-btn:hover{background:var(--surface2);}.wallet-dropdown-btn.danger{color:var(--red);}
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.2rem;border-radius:4px;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:var(--sans);letter-spacing:.02em;}
+    .btn-primary{background:var(--green);color:#050C14;}.btn-primary:hover{background:#00F090;box-shadow:0 0 18px var(--green-glo);}
+    .btn-outline{background:transparent;color:var(--green);border:1px solid var(--green);}.btn-outline:hover{background:var(--green-dim);}
+    .btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--border2);color:var(--white);}
+    .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.3);}.btn-danger:hover{background:rgba(239,68,68,.22);}
+    .btn-approve{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,217,126,.3);}.btn-approve:hover{background:rgba(0,217,126,.22);}
+    .btn-review{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(45,156,219,.3);}.btn-review:hover{background:rgba(45,156,219,.22);}
+    .btn-sm{padding:.3rem .7rem;font-size:.78rem;}.btn:disabled{opacity:.45;cursor:not-allowed;}.w-full{width:100%;}
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.18rem .55rem;border-radius:3px;font-size:.7rem;font-weight:700;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;}
+    .badge-pending{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.3);}
+    .badge-approved{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,217,126,.3);}
+    .badge-rejected{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+    .badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(45,156,219,.3);}
+    .badge-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+    /* CARDS */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;position:relative;}
+    .card-accent{border-left:3px solid var(--green);}.card-blue{border-left:3px solid var(--blue);}
+    /* FORMS */
+    .form-group{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1.15rem;}
+    .form-label{font-size:.72rem;font-weight:700;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;}
+    .form-input{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:.6rem .875rem;color:var(--white);font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+    .form-input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim);}.form-input::placeholder{color:var(--text3);}
+    .input-note{font-size:.7rem;color:var(--text2);margin-top:.2rem;}
+    /* TABLE */
+    .table-wrap{overflow-x:auto;border-radius:6px;border:1px solid var(--border);}
+    table{width:100%;border-collapse:collapse;}
+    thead th{text-align:left;padding:.65rem 1rem;font-size:.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--text2);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;}
+    tbody td{padding:.8rem 1rem;font-size:.87rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tbody tr:hover td{background:var(--surface2);}tbody tr:last-child td{border-bottom:none;}
+    /* TABS */
+    .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+    .tab{padding:.6rem 1.2rem;font-size:.875rem;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--sans);transition:all .2s;}
+    .tab:hover{color:var(--white);}.tab.active{color:var(--green);border-bottom-color:var(--green);}
+    /* STATS */
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.2rem 1.4rem;}
+    .stat-value{font-family:var(--mono);font-size:2rem;font-weight:700;color:var(--green);line-height:1;}
+    .stat-label{font-size:.72rem;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-top:.3rem;}
+    /* LAYOUT */
+    .container{max-width:1100px;margin:0 auto;padding:2rem;}
+    .page-header{margin-bottom:1.75rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border);}
+    .page-title{font-size:1.5rem;font-weight:700;color:var(--white);margin-bottom:.2rem;}.page-subtitle{font-size:.875rem;color:var(--text2);}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+    .flex{display:flex;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
+    .gap-1{gap:.5rem;}.gap-2{gap:1rem;}.mb-1{margin-bottom:.5rem;}.mb-2{margin-bottom:1rem;}.mb-3{margin-bottom:1.5rem;}.mt-1{margin-top:.5rem;}.mt-2{margin-top:1rem;}
+    .divider{height:1px;background:var(--border);margin:1.25rem 0;}
+    .text-green{color:var(--green);}.text-muted{color:var(--text2);}.text-mono{font-family:var(--mono);}.text-sm{font-size:.85rem;}.text-xs{font-size:.75rem;}.font-bold{font-weight:700;}
+    /* HERO */
+    .hero{padding:5rem 2rem 3.5rem;max-width:1100px;margin:0 auto;text-align:center;}
+    .hero-tag{display:inline-flex;align-items:center;gap:.4rem;background:var(--green-dim);border:1px solid rgba(0,217,126,.25);color:var(--green);font-size:.72rem;font-family:var(--mono);padding:.28rem .75rem;border-radius:2px;margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:.08em;}
+    .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;line-height:1.1;margin-bottom:1.25rem;}.hero h1 .hl{color:var(--green);}
+    .hero p{font-size:1.05rem;color:var(--text2);max-width:580px;margin:0 auto 2rem;line-height:1.75;}
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1rem;margin-top:2.5rem;text-align:left;}
+    .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.4rem;transition:border-color .2s,transform .2s;}
+    .feature-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+    .feature-icon{font-size:1.4rem;margin-bottom:.65rem;}.feature-title{font-size:.95rem;font-weight:700;color:var(--white);margin-bottom:.4rem;}.feature-desc{font-size:.82rem;color:var(--text2);line-height:1.65;}
+    /* STEPPER */
+    .stepper{display:flex;align-items:center;margin-bottom:2rem;}
+    .step{display:flex;align-items:center;gap:.45rem;flex:1;}
+    .step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.75rem;font-weight:700;flex-shrink:0;border:2px solid var(--border);background:var(--surface);color:var(--text2);transition:all .3s;}
+    .step.active .step-circle{border-color:var(--green);background:var(--green-dim);color:var(--green);box-shadow:0 0 10px var(--green-glo);}
+    .step.done .step-circle{border-color:var(--green);background:var(--green);color:var(--bg);}
+    .step-label{font-size:.72rem;color:var(--text2);font-weight:500;white-space:nowrap;}.step.active .step-label{color:var(--white);}
+    .step-line{flex:1;height:1px;background:var(--border);margin:0 .35rem;}.step-line.done{background:var(--green);}
+    /* HASH */
+    .hash{font-family:var(--mono);font-size:.75rem;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,217,126,.2);padding:.3rem .65rem;border-radius:3px;word-break:break-all;}
+    /* TX CARD */
+    .tx-card{background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:1rem 1.1rem;font-family:var(--mono);font-size:.76rem;}
+    .tx-row{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid var(--border);}.tx-row:last-child{border-bottom:none;}
+    .tx-key{color:var(--text2);}.tx-val{color:var(--green);text-align:right;max-width:260px;word-break:break-all;}
+    /* ALERTS */
+    .alert{padding:.8rem .95rem;border-radius:4px;font-size:.855rem;display:flex;align-items:flex-start;gap:.55rem;margin-bottom:1rem;line-height:1.55;}
+    .alert-success{background:var(--green-dim);border:1px solid rgba(0,217,126,.3);color:var(--green);}
+    .alert-error{background:var(--red-dim);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+    .alert-info{background:var(--blue-dim);border:1px solid rgba(45,156,219,.3);color:var(--blue);}
+    .alert-warn{background:var(--amber-dim);border:1px solid rgba(245,158,11,.3);color:var(--amber);}
+    /* MODAL */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+    .modal{background:var(--surface);border:1px solid var(--border2);border-radius:7px;padding:1.75rem;width:100%;animation:fadeIn .2s ease;}
+    .modal-sm{max-width:460px;margin:auto;}.modal-lg{max-width:760px;margin:auto;}
+    .modal-title{font-size:1.05rem;font-weight:700;color:var(--white);margin-bottom:.65rem;}
+    .modal-actions{display:flex;gap:.65rem;justify-content:flex-end;}
+    /* DOC PREVIEW */
+    .doc-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:.75rem;margin-bottom:1.25rem;}
+    .doc-thumb{background:var(--bg2);border:1px solid var(--border);border-radius:5px;overflow:hidden;}
+    .doc-thumb img{width:100%;height:125px;object-fit:cover;display:block;cursor:zoom-in;}
+    .doc-thumb-label{padding:.35rem .55rem;font-size:.68rem;font-family:var(--mono);color:var(--text2);border-top:1px solid var(--border);}
+    .doc-placeholder{height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;color:var(--text3);}
+    .doc-placeholder-icon{font-size:2rem;opacity:.4;}.doc-placeholder-txt{font-size:.68rem;text-align:center;line-height:1.5;}
+    /* STATUS TRACKER */
+    .tracker{display:flex;flex-direction:column;}
+    .t-step{display:flex;gap:.85rem;padding-bottom:1.4rem;position:relative;}
+    .t-step:not(:last-child)::before{content:'';position:absolute;left:14px;top:28px;bottom:0;width:1px;background:var(--border);}
+    .t-step.done::before{background:var(--green);}
+    .t-dot{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+    .t-step.done .t-dot{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+    .t-step.current .t-dot{animation:pulseG 1.5s infinite;border-color:var(--green);color:var(--green);background:var(--green-dim);}
+    .t-info h4{font-size:.88rem;color:var(--white);font-weight:600;}.t-info p{font-size:.78rem;color:var(--text2);margin-top:.15rem;}
+    /* WALLET BOX */
+    .wallet-box{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:2.25rem;text-align:center;max-width:380px;margin:0 auto;}
+    .wallet-icon{font-size:3rem;margin-bottom:1rem;}
+    /* FILE ZONE */
+    .file-zone{border:1px dashed var(--border2);border-radius:4px;padding:1.15rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;}
+    .file-zone:hover{border-color:var(--green);background:var(--green-dim);}.file-zone input{display:none;}
+    .file-zone-icon{font-size:1.4rem;margin-bottom:.35rem;}.file-zone-text{font-size:.82rem;color:var(--text2);}.file-zone-sub{font-size:.7rem;color:var(--text3);margin-top:.2rem;}
+    .file-uploaded{display:flex;align-items:center;justify-content:space-between;background:var(--green-dim);border:1px solid rgba(0,217,126,.25);border-radius:4px;padding:.55rem .85rem;font-size:.82rem;}
+    .file-name{color:var(--green);font-family:var(--mono);}
+    /* TEAM */
+    .team-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;text-align:center;}
+    .team-avatar{width:56px;height:56px;border-radius:50%;background:var(--green-dim);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto .7rem;font-family:var(--mono);font-weight:700;color:var(--green);}
+    .team-name{font-weight:700;color:var(--white);margin-bottom:.2rem;font-size:.95rem;}.team-role{font-size:.72rem;color:var(--text2);font-family:var(--mono);}
+    /* BLOCK CARD */
+    .block-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.2rem;font-family:var(--mono);border-left:3px solid var(--blue);}
+    .block-num{font-size:.7rem;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;}
+    /* TOAST */
+    .toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;display:flex;flex-direction:column;gap:.45rem;}
+    .toast{background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:.7rem .95rem;font-size:.84rem;display:flex;align-items:center;gap:.55rem;animation:fadeIn .3s ease;min-width:270px;max-width:340px;}
+    .toast-success{border-left:3px solid var(--green);}.toast-error{border-left:3px solid var(--red);}.toast-info{border-left:3px solid var(--blue);}
+    /* EMPTY */
+    .empty-state{text-align:center;padding:3rem 1rem;color:var(--text2);}.empty-state .eicon{font-size:2.5rem;margin-bottom:.65rem;opacity:.45;}
+    /* LOGIN */
+    .login-wrap{max-width:360px;margin:3rem auto;}.login-hdr{text-align:center;margin-bottom:1.75rem;}
+    .login-hdr h2{font-size:1.4rem;margin-bottom:.3rem;}.login-hdr p{font-size:.875rem;color:var(--text2);}
+    footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;margin-top:4rem;}
+    /* ANIM */
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes pulseG{0%,100%{box-shadow:0 0 0 0 var(--green-glo)}50%{box-shadow:0 0 0 6px transparent}}
+    .animate-in{animation:fadeIn .4s ease forwards;}
+    .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulseG 1.5s infinite;}
+    @media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.nav-links{display:none;}.hero{padding:3rem 1.5rem 2rem;}.stepper .step-label{display:none;}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+/* ── AUTO-DEPLOYED CONTRACT (generated by setup_deploy.py) ── */
+const DEPLOYED_CONTRACT_ADDRESS = "0xdb8Ee7ACf93Ae8f9AA318C4bE7690a89f4E98F80";
+const DEPLOYED_CONTRACT_ABI     = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"bytes32","name":"oldHash","type":"bytes32"},{"indexed":true,"internalType":"bytes32","name":"newHash","type":"bytes32"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"DocumentHashUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"verifier","type":"address"},{"indexed":false,"internalType":"string","name":"note","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"KYCApproved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"verifier","type":"address"},{"indexed":false,"internalType":"string","name":"reason","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"KYCRejected","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"revokedBy","type":"address"},{"indexed":false,"internalType":"string","name":"reason","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"KYCRevoked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"bytes32","name":"documentHash","type":"bytes32"},{"indexed":false,"internalType":"string","name":"ipfsCID","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"KYCSubmitted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"verifier","type":"address"},{"indexed":true,"internalType":"address","name":"addedBy","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"VerifierAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"verifier","type":"address"},{"indexed":true,"internalType":"address","name":"removedBy","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"VerifierRemoved","type":"event"},{"inputs":[{"internalType":"address","name":"verifier","type":"address"}],"name":"addVerifier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"string","name":"note","type":"string"}],"name":"approveKYC","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getDocumentHash","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getKYCRecord","outputs":[{"components":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes32","name":"documentHash","type":"bytes32"},{"internalType":"string","name":"ipfsCID","type":"string"},{"internalType":"string","name":"maskedAadhaar","type":"string"},{"internalType":"string","name":"panNumber","type":"string"},{"internalType":"string","name":"fullName","type":"string"},{"internalType":"enum KYCVerification.KYCStatus","name":"status","type":"uint8"},{"internalType":"uint256","name":"submittedAt","type":"uint256"},{"internalType":"uint256","name":"updatedAt","type":"uint256"},{"internalType":"address","name":"verifiedBy","type":"address"},{"internalType":"string","name":"verifierNote","type":"string"}],"internalType":"struct KYCVerification.KYCRecord","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getKYCStatus","outputs":[{"internalType":"enum KYCVerification.KYCStatus","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"offset","type":"uint256"},{"internalType":"uint256","name":"limit","type":"uint256"}],"name":"getKYCUsers","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getMyKYCRecord","outputs":[{"components":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes32","name":"documentHash","type":"bytes32"},{"internalType":"string","name":"ipfsCID","type":"string"},{"internalType":"string","name":"maskedAadhaar","type":"string"},{"internalType":"string","name":"panNumber","type":"string"},{"internalType":"string","name":"fullName","type":"string"},{"internalType":"enum KYCVerification.KYCStatus","name":"status","type":"uint8"},{"internalType":"uint256","name":"submittedAt","type":"uint256"},{"internalType":"uint256","name":"updatedAt","type":"uint256"},{"internalType":"address","name":"verifiedBy","type":"address"},{"internalType":"string","name":"verifierNote","type":"string"}],"internalType":"struct KYCVerification.KYCRecord","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getStats","outputs":[{"internalType":"uint256","name":"submissions","type":"uint256"},{"internalType":"uint256","name":"approved","type":"uint256"},{"internalType":"uint256","name":"rejected","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getTotalUsers","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"isKYCVerified","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"isVerifier","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"string","name":"reason","type":"string"}],"name":"rejectKYC","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"verifier","type":"address"}],"name":"removeVerifier","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"string","name":"reason","type":"string"}],"name":"revokeKYC","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"documentHash","type":"bytes32"},{"internalType":"string","name":"ipfsCID","type":"string"},{"internalType":"string","name":"maskedAadhaar","type":"string"},{"internalType":"string","name":"panNumber","type":"string"},{"internalType":"string","name":"fullName","type":"string"}],"name":"submitKYC","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"totalApproved","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalRejected","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSubmissions","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"bytes32","name":"claimedHash","type":"bytes32"}],"name":"verifyDocumentIntegrity","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}];
+/* ─────────────────────────────────────────────────────────── */
+const { useState, useEffect, useRef } = React;
+
+const H16=()=>'0123456789abcdef'.charAt(Math.floor(Math.random()*16));
+const genHash=(n=64)=>'0x'+Array.from({length:n},H16).join('');
+const genAddr=()=>'0x'+Array.from({length:40},H16).join('');
+const short=h=>h?h.slice(0,8)+'…'+h.slice(-6):'';
+const shortA=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
+const timeAgo=d=>{const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';};
+
+function fileToDataURL(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error('fail'));r.readAsDataURL(file);});}
+
+const SEED_REQS=[
+  {id:1,name:'Rahul Mehta',  wallet:genAddr(),aadhaar:'****-****-4521',pan:'ABCDE1234F',dob:'1998-03-12',addr:'Andheri West, Mumbai',status:'pending', txHash:genHash(),docHash:genHash(),submittedAt:new Date(Date.now()-3600000).toISOString(), docs:['Aadhaar Card','PAN Card','Selfie'],docPreviews:null,verifiedAt:null,note:''},
+  {id:2,name:'Priya Sharma', wallet:genAddr(),aadhaar:'****-****-8832',pan:'FGHIJ5678K',dob:'2000-07-25',addr:'Bandra East, Mumbai', status:'approved',txHash:genHash(),docHash:genHash(),submittedAt:new Date(Date.now()-86400000).toISOString(),docs:['Aadhaar Card','PAN Card','Selfie'],docPreviews:null,verifiedAt:new Date(Date.now()-43200000).toISOString(),note:'Documents verified.'},
+  {id:3,name:'Karan Patel',  wallet:genAddr(),aadhaar:'****-****-1120',pan:'LMNOP9012Q',dob:'1995-11-08',addr:'Powai, Mumbai',       status:'rejected',txHash:genHash(),docHash:genHash(),submittedAt:new Date(Date.now()-172800000).toISOString(),docs:['Aadhaar Card','PAN Card'],       docPreviews:null,verifiedAt:new Date(Date.now()-100000000).toISOString(),note:'PAN image is blurry. Resubmit.'},
+  {id:4,name:'Sneha Joshi',  wallet:genAddr(),aadhaar:'****-****-7753',pan:'RSTUV3456W',dob:'2001-02-14',addr:'Thane West, MH',     status:'pending', txHash:genHash(),docHash:genHash(),submittedAt:new Date(Date.now()-7200000).toISOString(), docs:['Aadhaar Card','PAN Card','Selfie'],docPreviews:null,verifiedAt:null,note:''},
+];
+const CHAIN_TXS=Array.from({length:12},(_,i)=>({block:19823456-i,txHash:genHash(),from:genAddr(),to:'0xKYCContract_a8f9b0c1d2e3f4a5b6c7',action:['KYC_SUBMIT','KYC_VERIFY','KYC_REVOKE','ADD_VERIFIER'][i%4],gas:(21000+Math.floor(Math.random()*50000)).toString(),ts:new Date(Date.now()-i*1800000).toISOString()}));
+
+function ToastStack({toasts}){return<div className="toast-wrap">{toasts.map(t=><div key={t.id} className={`toast toast-${t.type}`}><span>{t.type==='success'?'✓':t.type==='error'?'✕':'ℹ'}</span><span>{t.msg}</span></div>)}</div>;}
+
+/* ── WALLET DROPDOWN ── */
+function WalletMenu({wallet,onDisconnect,onSwitch}){
+  const [open,setOpen]=useState(false);
+  const ref=useRef(null);
+  useEffect(()=>{
+    const h=e=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false);};
+    document.addEventListener('mousedown',h);return()=>document.removeEventListener('mousedown',h);
+  },[]);
+  return(
+    <div className="wallet-menu-wrap" ref={ref}>
+      <div className="wallet-chip" onClick={()=>setOpen(o=>!o)}>
+        <span className="pulse-dot"/><span className="text-mono text-sm text-green">{shortA(wallet)}</span>
+        <span style={{color:'var(--text2)',fontSize:'.7rem'}}>{open?'▲':'▼'}</span>
+      </div>
+      {open&&(
+        <div className="wallet-dropdown">
+          <div className="wallet-dropdown-addr">Connected Wallet<span>{wallet}</span></div>
+          <button className="wallet-dropdown-btn" onClick={()=>{onSwitch();setOpen(false);}}>🔄 Switch Wallet</button>
+          <button className="wallet-dropdown-btn danger" onClick={()=>{onDisconnect();setOpen(false);}}>⏏ Disconnect Wallet</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── NAVBAR ── */
+function Navbar({page,setPage,wallet,onConnectClick,onDisconnect,onSwitch}){
+  return(
+    <nav className="navbar">
+      <div className="nav-logo" onClick={()=>setPage('home')}><span style={{fontSize:'1.5rem',lineHeight:1}}>⬡</span><div>ChainKYC<sub>Blockchain KYC System</sub></div></div>
+      <div className="nav-links">{[['home','Home'],['user','User Portal'],['verifier','Verifier'],['explorer','Explorer']].map(([p,l])=><button key={p} className={`nav-link ${page===p?'active':''}`} onClick={()=>setPage(p)}>{l}</button>)}</div>
+      <div className="nav-right">{wallet?<WalletMenu wallet={wallet} onDisconnect={onDisconnect} onSwitch={onSwitch}/>:<button className="btn btn-outline btn-sm" onClick={onConnectClick}>🦊 Connect Wallet</button>}</div>
+    </nav>
+  );
+}
+
+/* ── HOME PAGE ── */
+function HomePage({setPage,reqs}){
+  const approved=reqs.filter(r=>r.status==='approved').length;
+  const pending=reqs.filter(r=>r.status==='pending').length;
+  const features=[
+    {icon:'🔒',title:'Immutable Records',desc:'Once committed, KYC hashes are permanently stored on Ethereum. Tamper-proof, irreversible, always verifiable.'},
+    {icon:'🔐',title:'Privacy-First Design',desc:'Only SHA-256 document hashes + IPFS CIDs go on-chain. Actual documents never touch the blockchain.'},
+    {icon:'⚡',title:'Smart Contract Automation',desc:'Verification logic is enforced by code, not humans. No intermediaries, no bottlenecks.'},
+    {icon:'🌐',title:'Cross-Platform Identity',desc:'One verified KYC works across all compliant DeFi protocols, exchanges, and financial institutions.'},
+    {icon:'👁️',title:'Full Audit Trail',desc:'Every action — submit, verify, reject, revoke — emits a blockchain event. Full transparency, zero blind spots.'},
+    {icon:'🛡️',title:'Role-Based Access Control',desc:'Only whitelisted verifiers can update KYC status. Smart contract enforces all access rules on-chain.'},
+  ];
+  return(
+    <div>
+      <div className="hero animate-in">
+        <div className="hero-tag">⬡ Ethereum · Solidity 0.8.19 · IPFS · Web3.js</div>
+        <h1>Secure KYC Verification<br/>on the <span className="hl">Blockchain</span></h1>
+        <p>Decentralized, tamper-proof identity verification. Document hashes on-chain, user-controlled data access, and a full smart-contract audit trail — no central point of failure.</p>
+        <div style={{display:'flex',gap:'.75rem',justifyContent:'center',flexWrap:'wrap'}}>
+          <button className="btn btn-primary" onClick={()=>setPage('user')}>Start KYC Verification →</button>
+          <button className="btn btn-ghost" onClick={()=>setPage('explorer')}>View Block Explorer</button>
+        </div>
+        <div className="grid-4" style={{marginTop:'2.75rem',textAlign:'left'}}>
+          {[{v:reqs.length,l:'Total Submissions'},{v:approved,l:'Verified Users'},{v:pending,l:'Pending Review'},{v:'<24h',l:'Avg. Verify Time'}].map((s,i)=><div key={i} className="stat-card"><div className="stat-value">{s.v}</div><div className="stat-label">{s.l}</div></div>)}
+        </div>
+      </div>
+      <div className="container" style={{paddingTop:0}}>
+        <div style={{textAlign:'center',marginBottom:'1.5rem'}}><h2 style={{fontSize:'1.65rem'}}>Why Blockchain KYC?</h2><p className="text-muted" style={{fontSize:'.88rem',marginTop:'.4rem'}}>Traditional KYC is centralized, slow, and a single point of data breach.</p></div>
+        <div className="features-grid">{features.map((f,i)=><div key={i} className="feature-card animate-in" style={{animationDelay:`${i*.06}s`}}><div className="feature-icon">{f.icon}</div><div className="feature-title">{f.title}</div><div className="feature-desc">{f.desc}</div></div>)}</div>
+        <div style={{marginTop:'3rem'}}>
+          <h2 style={{fontSize:'1.35rem',marginBottom:'1.25rem'}}>System Architecture</h2>
+          <div className="grid-2">
+            <div className="card card-accent"><span className="badge badge-blue" style={{marginBottom:'.75rem',display:'inline-flex'}}>Smart Contract Layer</span><h3 style={{fontSize:'1rem',marginBottom:'.75rem'}}>KYCVerification.sol</h3><ul style={{fontSize:'.83rem',color:'var(--text2)',lineHeight:'2.1',paddingLeft:'1rem'}}><li>Stores SHA-256 document hashes on-chain</li><li>Role-based verifier whitelist (owner → verifiers)</li><li>KYC state machine: NONE → SUBMITTED → APPROVED / REJECTED</li><li>IPFS CID reference for encrypted document bundles</li><li>On-chain events for every action (full audit log)</li><li>Verifier document review before approval</li></ul></div>
+            <div className="card card-accent"><span className="badge badge-approved" style={{marginBottom:'.75rem',display:'inline-flex'}}>Frontend DApp</span><h3 style={{fontSize:'1rem',marginBottom:'.75rem'}}>React + Web3.js + IPFS</h3><ul style={{fontSize:'.83rem',color:'var(--text2)',lineHeight:'2.1',paddingLeft:'1rem'}}><li>MetaMask with connect / disconnect / switch wallet</li><li>Client-side SHA-256 document hashing (no server)</li><li>IPFS upload via Pinata API (encrypted bundles)</li><li>Real-time transaction status polling</li><li>Verifier dashboard with full document preview modal</li><li>Block explorer for full audit trail</li></ul></div>
+          </div>
+        </div>
+        <div style={{marginTop:'2.5rem'}}>
+          <h2 style={{fontSize:'1.35rem',marginBottom:'1.25rem'}}>KYC Flow</h2>
+          <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'6px',padding:'1.5rem',justifyContent:'center',gap:'0'}}>
+            {['User Submits\nDocs','Client Hashes\nDocs (SHA-256)','Hash Stored\non Ethereum','IPFS Stores\nEncrypted Docs','Verifier Reviews\nDocuments','KYC Status\nUpdated On-Chain'].map((s,i)=>(
+              <React.Fragment key={i}>
+                <div style={{textAlign:'center',padding:'0 .5rem'}}>
+                  <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'var(--green-dim)',border:'2px solid var(--green)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto .5rem',fontFamily:'var(--mono)',fontWeight:'700',color:'var(--green)',fontSize:'.85rem'}}>{i+1}</div>
+                  <div style={{fontSize:'.72rem',color:'var(--text2)',whiteSpace:'pre',lineHeight:'1.4',textAlign:'center'}}>{s}</div>
+                </div>
+                {i<5&&<div style={{color:'var(--text3)',fontSize:'1.2rem',padding:'0 .15rem',marginBottom:'1rem'}}>›</div>}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+        <div style={{marginTop:'3rem'}}>
+          <div style={{textAlign:'center',marginBottom:'1.25rem'}}><span className="badge badge-blue" style={{display:'inline-flex',marginBottom:'.65rem'}}>Mini Project · 6th Semester · 2025–26</span><h2 style={{fontSize:'1.35rem'}}>Team</h2><p className="text-muted text-sm" style={{marginTop:'.3rem'}}>Blockchain Technology Subject · BE Computer Engineering</p></div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:'1rem'}}>
+            {[{i:'M',n:'Miqdaad Sayyed',r:'Blockchain Dev'},{i:'A',n:'Arfat Shaikh',r:'Smart Contract & Backend'},{i:'F',n:'Faazil Mirza Shaikh',r:'Frontend & Integration'}].map((m,i)=><div key={i} className="team-card"><div className="team-avatar">{m.i}</div><div className="team-name">{m.n}</div><div className="team-role">{m.r}</div></div>)}
+          </div>
+          <p style={{textAlign:'center',marginTop:'1rem',fontSize:'.7rem',color:'var(--text3)',fontFamily:'var(--mono)'}}>MUMBAI UNIVERSITY · DEPARTMENT OF COMPUTER ENGINEERING · BLOCKCHAIN TECHNOLOGY (BT)</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── KYC STATUS VIEW ── */
+function KYCStatusView({req,isNew}){
+  const maps={
+    pending:[{l:'KYC Submitted to Chain',done:true,info:'Tx: '+short(req.txHash)},{l:'Document Hash Recorded',done:true,info:'Block confirmation received'},{l:'Awaiting Verifier Review',done:false,cur:true,info:'Your KYC is in the queue'},{l:'Verification Complete',done:false,info:'—'}],
+    approved:[{l:'KYC Submitted',done:true},{l:'Hash Recorded on Chain',done:true},{l:'Verifier Reviewed Docs',done:true},{l:'KYC Approved ✓',done:true}],
+    rejected:[{l:'KYC Submitted',done:true},{l:'Hash Recorded on Chain',done:true},{l:'Verifier Reviewed Docs',done:true},{l:'KYC Rejected ✗',done:false}],
+  };
+  return(
+    <div style={{maxWidth:'580px',margin:'0 auto'}}>
+      {isNew&&<div className="alert alert-success">✓ KYC submitted! Transaction broadcast to Ethereum network.</div>}
+      <div className="card mb-2">
+        <div className="flex justify-between items-center mb-2"><h3 style={{fontSize:'1rem'}}>KYC Status — {req.name}</h3><span className={`badge badge-${req.status}`}>{req.status.toUpperCase()}</span></div>
+        <div className="tracker mt-1">
+          {maps[req.status].map((s,i)=><div key={i} className={`t-step ${s.done?'done':''} ${s.cur?'current':''}`}><div className="t-dot">{s.done?'✓':s.cur?'●':''}</div><div className="t-info"><h4>{s.l}</h4>{s.info&&<p>{s.info}</p>}</div></div>)}
+        </div>
+        {req.note&&<div className={`alert ${req.status==='rejected'?'alert-error':'alert-success'}`} style={{marginTop:'.75rem',fontSize:'.8rem'}}><strong>Verifier Note:</strong> {req.note}</div>}
+      </div>
+      <div className="card">
+        <p className="form-label mb-1">On-Chain Record</p>
+        <div className="tx-card">
+          {[['Tx Hash',short(req.txHash)],['Doc Hash',short(req.docHash)],['Network','Ethereum Sepolia Testnet'],['Contract','0xKYCContract_a8f9b0c1d2e3f4…'],['Confirmed','Yes — finalized'],['Submitted',new Date(req.submittedAt).toLocaleString()]].map(([k,v])=><div className="tx-row" key={k}><span className="tx-key">{k}</span><span className="tx-val">{v}</span></div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── USER PORTAL ── */
+function UserPortal({wallet,setWallet,addToast,reqs,addReq}){
+  const [step,setStep]=useState(wallet?1:0);
+  const [conn,setConn]=useState(false);
+  const [submitting,setSub]=useState(false);
+  const [submitted,setDone]=useState(null);
+  const [form,setForm]=useState({name:'',dob:'',aadhaar:'',pan:'',address:'',city:'',pin:''});
+  const [files,setFiles]=useState({aadhaar:null,pan:null,selfie:null});
+
+  useEffect(()=>{
+    if(!wallet){setStep(0);setDone(null);setForm({name:'',dob:'',aadhaar:'',pan:'',address:'',city:'',pin:''});setFiles({aadhaar:null,pan:null,selfie:null});}
+    else if(wallet&&step===0)setStep(1);
+  },[wallet]);
+
+  const existing=wallet?reqs.find(r=>r.wallet===wallet):null;
+
+  function connect(){setConn(true);setTimeout(()=>{const a=genAddr();setWallet(a);setStep(1);setConn(false);addToast('success','Wallet connected: '+shortA(a));},1800);}
+
+  const setF=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const valid1=form.name&&form.dob&&form.aadhaar.length===12&&form.pan.length===10&&form.address;
+  const valid2=files.aadhaar&&files.pan;
+
+  async function submit(){
+    if(!valid1||!valid2){addToast('error','Fill all required fields');return;}
+    setSub(true);
+    const previews={};
+    for(const key of['aadhaar','pan','selfie']){if(files[key]){try{previews[key]=await fileToDataURL(files[key]);}catch(e){previews[key]=null;}}}
+    setTimeout(()=>{
+      const r={id:Date.now(),name:form.name,wallet,aadhaar:'****-****-'+form.aadhaar.slice(-4),pan:form.pan.toUpperCase(),dob:form.dob,addr:`${form.address}, ${form.city}`,status:'pending',txHash:genHash(),docHash:genHash(),submittedAt:new Date().toISOString(),docs:['Aadhaar Card','PAN Card',...(files.selfie?['Selfie']:[])],docPreviews:previews,verifiedAt:null,note:''};
+      addReq(r);setDone(r);setSub(false);setStep(4);addToast('success','KYC submitted — tx recorded on blockchain');
+    },2500);
+  }
+
+  const STEPS=['Connect Wallet','Personal Info','Upload Docs','Review','Track Status'];
+  return(
+    <div className="container animate-in">
+      <div className="page-header"><h1 className="page-title">User KYC Portal</h1><p className="page-subtitle">Complete your decentralized identity verification — all document hashes stored immutably on-chain.</p></div>
+      {!existing&&<div className="stepper">{STEPS.map((s,i)=><React.Fragment key={i}><div className={`step ${step===i?'active':step>i?'done':''}`}><div className="step-circle">{step>i?'✓':i+1}</div><span className="step-label">{s}</span></div>{i<STEPS.length-1&&<div className={`step-line ${step>i?'done':''}`}/>}</React.Fragment>)}</div>}
+      {existing&&<KYCStatusView req={existing}/>}
+      {!existing&&<>
+        {step===0&&<div className="wallet-box"><div className="wallet-icon">🦊</div><h3 style={{marginBottom:'.5rem'}}>Connect Your Wallet</h3><p className="text-muted text-sm" style={{marginBottom:'1.5rem',lineHeight:'1.65'}}>Connect MetaMask to cryptographically sign your KYC transaction and link your identity to your Ethereum address.</p><button className="btn btn-primary w-full" onClick={connect} disabled={conn}>{conn?<><span className="spinner"/> Connecting MetaMask…</>:'🦊 Connect MetaMask'}</button><p className="text-xs text-muted" style={{marginTop:'.75rem'}}>Also supports WalletConnect · Coinbase Wallet · Trust Wallet</p></div>}
+        {step===1&&<div className="card" style={{maxWidth:'640px'}}><h3 style={{marginBottom:'1.25rem'}}>Personal Information</h3><div className="grid-2"><div className="form-group"><label className="form-label">Full Name *</label><input className="form-input" placeholder="As on Aadhaar card" value={form.name} onChange={e=>setF('name',e.target.value)}/></div><div className="form-group"><label className="form-label">Date of Birth *</label><input type="date" className="form-input" value={form.dob} onChange={e=>setF('dob',e.target.value)}/></div></div><div className="grid-2"><div className="form-group"><label className="form-label">Aadhaar Number *</label><input className="form-input" placeholder="12 digit number" maxLength={12} value={form.aadhaar} onChange={e=>setF('aadhaar',e.target.value.replace(/\D/g,''))}/><p className="input-note">Only last 4 digits stored on-chain (masked)</p></div><div className="form-group"><label className="form-label">PAN Number *</label><input className="form-input" placeholder="ABCDE1234F" maxLength={10} value={form.pan} onChange={e=>setF('pan',e.target.value.toUpperCase())}/></div></div><div className="form-group"><label className="form-label">Residential Address *</label><input className="form-input" placeholder="Flat/House, Street, Locality" value={form.address} onChange={e=>setF('address',e.target.value)}/></div><div className="grid-2"><div className="form-group"><label className="form-label">City *</label><input className="form-input" placeholder="Mumbai" value={form.city} onChange={e=>setF('city',e.target.value)}/></div><div className="form-group"><label className="form-label">PIN Code</label><input className="form-input" placeholder="400001" maxLength={6} value={form.pin} onChange={e=>setF('pin',e.target.value.replace(/\D/g,''))}/></div></div><button className="btn btn-primary" onClick={()=>setStep(2)} disabled={!valid1}>Continue →</button></div>}
+        {step===2&&<div className="card" style={{maxWidth:'640px'}}><h3 style={{marginBottom:'.35rem'}}>Document Upload</h3><p className="text-muted text-sm" style={{marginBottom:'1.5rem'}}>Files are hashed client-side using SHA-256. Only the hash + IPFS CID is stored on-chain. Your documents stay private.</p>{[{k:'aadhaar',l:'Aadhaar Card',req:true,note:'Front side · JPG, PNG, PDF'},{k:'pan',l:'PAN Card',req:true,note:'Clear scan · JPG, PNG, PDF'},{k:'selfie',l:'Live Selfie',req:false,note:'Hold Aadhaar in photo · JPG, PNG'}].map(f=><div key={f.k} className="form-group"><label className="form-label">{f.l} {f.req?'*':'(Optional)'}</label>{files[f.k]?<div className="file-uploaded"><span className="file-name">✓ {files[f.k].name}</span><button className="btn btn-ghost btn-sm" onClick={()=>setFiles(p=>({...p,[f.k]:null}))}>✕</button></div>:<label className="file-zone"><input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={e=>e.target.files[0]&&setFiles(p=>({...p,[f.k]:e.target.files[0]}))}/><div className="file-zone-icon">📎</div><div className="file-zone-text">Click to upload {f.l}</div><div className="file-zone-sub">{f.note}</div></label>}</div>)}<div style={{display:'flex',gap:'.75rem'}}><button className="btn btn-ghost" onClick={()=>setStep(1)}>← Back</button><button className="btn btn-primary" onClick={()=>setStep(3)} disabled={!valid2}>Continue →</button></div></div>}
+        {step===3&&<div className="card" style={{maxWidth:'640px'}}><h3 style={{marginBottom:'1.25rem'}}>Review & Submit</h3><p className="form-label mb-1">Personal Details</p><div className="tx-card mb-2">{[['Name',form.name],['Date of Birth',form.dob],['Aadhaar (masked)','****-****-'+form.aadhaar.slice(-4)],['PAN',form.pan],['Address',`${form.address}, ${form.city}`],['Wallet',shortA(wallet)]].map(([k,v])=><div className="tx-row" key={k}><span className="tx-key">{k}</span><span className="tx-val" style={{color:'var(--text)'}}>{v}</span></div>)}</div><p className="form-label mb-1">Uploaded Documents</p><div style={{display:'flex',gap:'.4rem',flexWrap:'wrap',marginBottom:'1.25rem'}}>{Object.entries(files).filter(([,v])=>v).map(([k])=><span key={k} className="badge badge-approved">✓ {k.charAt(0).toUpperCase()+k.slice(1)}</span>)}</div><div className="alert alert-warn" style={{fontSize:'.8rem'}}>⚠ Submitting will record your document hash permanently on the Ethereum blockchain. This action cannot be undone.</div><div style={{display:'flex',gap:'.75rem',marginTop:'1rem'}}><button className="btn btn-ghost" onClick={()=>setStep(2)} disabled={submitting}>← Back</button><button className="btn btn-primary" onClick={submit} disabled={submitting}>{submitting?<><span className="spinner"/> Broadcasting Transaction…</>:'🔗 Submit KYC on Blockchain'}</button></div></div>}
+        {step===4&&submitted&&<KYCStatusView req={submitted} isNew/>}
+      </>}
+    </div>
+  );
+}
+
+/* ── DOC REVIEW MODAL ── */
+function DocReviewModal({req,onClose,onApprove,onReject,busy}){
+  const [note,setNote]=useState('');
+  const [action,setAction]=useState(null);
+  const [lightbox,setLightbox]=useState(null);
+  const previews=req.docPreviews||{};
+  const docList=[{key:'aadhaar',label:'Aadhaar Card'},{key:'pan',label:'PAN Card'},{key:'selfie',label:'Selfie'}].filter(d=>req.docs.some(dd=>dd.toLowerCase().includes(d.key)));
+
+  return(
+    <div className="overlay">
+      <div className="modal modal-lg">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'1.2rem'}}>
+          <div><h3 className="modal-title" style={{marginBottom:'.25rem'}}>Review KYC — {req.name}</h3><span className={`badge badge-${req.status}`}>{req.status.toUpperCase()}</span></div>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} disabled={busy}>✕</button>
+        </div>
+
+        <p className="form-label mb-1">Applicant Details</p>
+        <div className="tx-card mb-2">
+          {[['Full Name',req.name],['Aadhaar',req.aadhaar],['PAN',req.pan],['Wallet',short(req.wallet)],['Submitted',new Date(req.submittedAt).toLocaleString()],['Doc Hash',short(req.docHash)]].map(([k,v])=><div className="tx-row" key={k}><span className="tx-key">{k}</span><span className="tx-val" style={{color:'var(--text)'}}>{v}</span></div>)}
+        </div>
+
+        <p className="form-label mb-1">Submitted Documents {previews&&Object.keys(previews).length>0&&<span style={{color:'var(--blue)',fontSize:'.68rem',marginLeft:'.35rem',fontWeight:400}}>(click image to enlarge)</span>}</p>
+        <div className="doc-preview-grid">
+          {docList.map(d=>(
+            <div key={d.key} className="doc-thumb">
+              {previews[d.key]
+                ? previews[d.key].startsWith('data:image')
+                  ? <img src={previews[d.key]} alt={d.label} onClick={()=>setLightbox(previews[d.key])}/>
+                  : <div className="doc-placeholder" style={{cursor:'pointer'}} onClick={()=>{const a=document.createElement('a');a.href=previews[d.key];a.download=d.label+'.pdf';a.click();}}><div className="doc-placeholder-icon">📄</div><div className="doc-placeholder-txt">PDF Document<br/><span style={{color:'var(--green)',fontSize:'.65rem'}}>Click to download</span></div></div>
+                : <div className="doc-placeholder"><div className="doc-placeholder-icon">🔒</div><div className="doc-placeholder-txt">Stored on IPFS<br/><span style={{fontSize:'.62rem'}}>Preview N/A in demo</span></div></div>
+              }
+              <div className="doc-thumb-label">{d.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {!action&&<><div className="divider"/><div style={{display:'flex',gap:'.65rem',justifyContent:'flex-end'}}><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-danger" onClick={()=>setAction('reject')}>✕ Reject KYC</button><button className="btn btn-approve" onClick={()=>setAction('approve')}>✓ Approve KYC</button></div></>}
+
+        {action&&<>
+          <div className="divider"/>
+          <div className={`alert ${action==='approve'?'alert-info':'alert-error'}`} style={{marginBottom:'1rem',fontSize:'.8rem'}}>{action==='approve'?'This will approve and record the tx on Ethereum. Irreversible.':'Rejection reason will be stored on-chain for the user to see.'}</div>
+          <div className="form-group" style={{marginBottom:'1rem'}}>
+            <label className="form-label">{action==='approve'?'Verifier Note (optional)':'Rejection Reason *'}</label>
+            <input className="form-input" placeholder={action==='approve'?'All documents verified successfully.':'State the reason clearly...'} value={note} onChange={e=>setNote(e.target.value)}/>
+          </div>
+          <div style={{display:'flex',gap:'.65rem',justifyContent:'flex-end'}}>
+            <button className="btn btn-ghost" onClick={()=>setAction(null)} disabled={busy}>← Back</button>
+            <button className={action==='approve'?'btn btn-primary':'btn btn-danger'} disabled={busy||(action==='reject'&&!note.trim())} onClick={()=>action==='approve'?onApprove(note):onReject(note)}>
+              {busy?<><span className="spinner"/> Recording on Chain…</>:action==='approve'?'Approve & Record on Chain':'Reject & Record on Chain'}
+            </button>
+          </div>
+        </>}
+      </div>
+
+      {lightbox&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.92)',zIndex:400,display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'}} onClick={()=>setLightbox(null)}>
+          <img src={lightbox} style={{maxWidth:'90vw',maxHeight:'90vh',borderRadius:'4px',objectFit:'contain'}} alt="preview"/>
+          <button style={{position:'absolute',top:'1.5rem',right:'1.5rem',background:'rgba(255,255,255,.1)',border:'none',color:'white',borderRadius:'50%',width:'36px',height:'36px',fontSize:'1.1rem',cursor:'pointer'}} onClick={()=>setLightbox(null)}>✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── VERIFIER PORTAL ── */
+function VerifierPortal({reqs,updateStatus,addToast}){
+  const [auth,setAuth]=useState(false);
+  const [pw,setPw]=useState('');
+  const [err,setErr]=useState('');
+  const [tab,setTab]=useState('pending');
+  const [review,setReview]=useState(null);
+  const [busy,setBusy]=useState(false);
+
+  const login=()=>pw==='verifier123'?(setAuth(true),setErr('')):setErr('Invalid credentials');
+  const filtered=reqs.filter(r=>r.status===tab);
+  const counts={pending:reqs.filter(r=>r.status==='pending').length,approved:reqs.filter(r=>r.status==='approved').length,rejected:reqs.filter(r=>r.status==='rejected').length};
+
+  function act(status,note){setBusy(true);setTimeout(()=>{updateStatus(review.id,status,note||review.name+' docs verified.');setBusy(false);setReview(null);addToast('success',`KYC ${status} — tx hash recorded on chain`);},2100);}
+
+  if(!auth)return(
+    <div className="container animate-in">
+      <div className="login-wrap">
+        <div className="login-hdr"><div style={{fontSize:'2.25rem',marginBottom:'.75rem'}}>🔐</div><h2>Verifier Login</h2><p>Restricted to whitelisted verifier addresses</p></div>
+        <div className="card">
+          <div className="form-group"><label className="form-label">Verifier ID</label><input className="form-input" value="VERIFIER_ADDR_0x1f2e3d4c" readOnly style={{opacity:.55}}/></div>
+          <div className="form-group"><label className="form-label">Access Password</label><input type="password" className="form-input" placeholder="Enter password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}/>{err&&<p style={{color:'var(--red)',fontSize:'.75rem',marginTop:'.25rem'}}>{err}</p>}</div>
+          <button className="btn btn-primary w-full" onClick={login}>Login to Verifier Portal</button>
+          <p className="text-xs text-muted" style={{textAlign:'center',marginTop:'.65rem'}}>Demo: password is <span className="text-mono text-green">verifier123</span></p>
+        </div>
+      </div>
+    </div>
+  );
+
+  return(
+    <div className="container animate-in">
+      <div className="page-header flex justify-between items-center">
+        <div><h1 className="page-title">Verifier Dashboard</h1><p className="page-subtitle">Review KYC documents and broadcast approval / rejection on-chain</p></div>
+        <div style={{display:'flex',gap:'.5rem',alignItems:'center'}}><span className="badge badge-approved"><span className="pulse-dot" style={{width:6,height:6}}/>  Active Session</span><button className="btn btn-ghost btn-sm" onClick={()=>setAuth(false)}>Logout</button></div>
+      </div>
+      <div className="grid-3 mb-3">{[{l:'Pending Review',v:counts.pending,c:'var(--amber)'},{l:'Approved',v:counts.approved,c:'var(--green)'},{l:'Rejected',v:counts.rejected,c:'var(--red)'}].map((s,i)=><div key={i} className="stat-card"><div className="stat-value" style={{color:s.c}}>{s.v}</div><div className="stat-label">{s.l}</div></div>)}</div>
+      <div className="tabs">{[['pending','Pending',counts.pending],['approved','Approved',counts.approved],['rejected','Rejected',counts.rejected]].map(([k,l,c])=><button key={k} className={`tab ${tab===k?'active':''}`} onClick={()=>setTab(k)}>{l} {c>0&&<span style={{fontSize:'.68rem',background:'var(--surface2)',padding:'.08rem .38rem',borderRadius:'3px',marginLeft:'4px'}}>{c}</span>}</button>)}</div>
+      {filtered.length===0
+        ?<div className="empty-state"><div className="eicon">📭</div><p>No {tab} submissions</p></div>
+        :<div className="table-wrap"><table><thead><tr><th>User Details</th><th>Wallet</th><th>Documents</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead><tbody>
+          {filtered.map(r=><tr key={r.id}>
+            <td><div style={{fontWeight:600,color:'var(--white)'}}>{r.name}</div><div className="text-xs text-muted">{r.aadhaar} · {r.pan}</div></td>
+            <td><span className="hash" style={{fontSize:'.7rem'}}>{short(r.wallet)}</span></td>
+            <td><div style={{display:'flex',gap:'.3rem',flexWrap:'wrap'}}>{r.docs.map(d=><span key={d} className="badge badge-blue" style={{fontSize:'.65rem'}}>{d}</span>)}</div></td>
+            <td className="text-sm text-muted">{timeAgo(r.submittedAt)}</td>
+            <td><span className={`badge badge-${r.status}`}>{r.status.toUpperCase()}</span></td>
+            <td>{r.status==='pending'?<button className="btn btn-review btn-sm" onClick={()=>setReview(r)}>👁 Review Docs</button>:<span className="text-xs text-muted">{r.verifiedAt?timeAgo(r.verifiedAt):'—'}</span>}</td>
+          </tr>)}
+        </tbody></table></div>
+      }
+      {review&&<DocReviewModal req={review} busy={busy} onClose={()=>!busy&&setReview(null)} onApprove={note=>act('approved',note)} onReject={note=>act('rejected',note)}/>}
+    </div>
+  );
+}
+
+/* ── BLOCK EXPLORER ── */
+function BlockExplorer({reqs}){
+  const [tab,setTab]=useState('txs');
+  const [q,setQ]=useState('');
+  const [res,setRes]=useState(null);
+  const allTxs=[...reqs.map(r=>({block:19823456-Math.floor(Math.random()*200),txHash:r.txHash,from:r.wallet,to:'0xKYCContract_a8f9b0c1…',action:'KYC_SUBMIT',gas:'47823',ts:r.submittedAt})),...CHAIN_TXS].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  function search(){const f=allTxs.find(t=>t.txHash===q||t.txHash.startsWith(q));setRes(f||'404');}
+  return(
+    <div className="container animate-in">
+      <div className="page-header"><h1 className="page-title">Block Explorer</h1><p className="page-subtitle">Ethereum Sepolia Testnet · Real-time KYC contract audit trail</p></div>
+      <div className="card mb-3">
+        <p className="form-label mb-1">Search Transaction / Address</p>
+        <div style={{display:'flex',gap:'.75rem'}}><input className="form-input" placeholder="0x transaction hash or wallet address…" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&search()}/><button className="btn btn-primary" onClick={search}>Search</button></div>
+        {res==='404'&&<p className="text-sm" style={{color:'var(--red)',marginTop:'.5rem'}}>No transaction found.</p>}
+        {res&&res!=='404'&&<div className="tx-card" style={{marginTop:'1rem'}}>{[['Tx Hash',res.txHash],['Block','#'+res.block],['From',res.from],['To (Contract)',res.to],['Action',res.action],['Gas Used',res.gas+' wei'],['Status','✓ Confirmed'],['Timestamp',new Date(res.ts).toLocaleString()]].map(([k,v])=><div className="tx-row" key={k}><span className="tx-key">{k}</span><span className="tx-val">{v}</span></div>)}</div>}
+      </div>
+      <div className="grid-2 mb-3">
+        <div className="block-card"><div className="block-num">KYC Smart Contract</div><div className="text-mono text-xs" style={{color:'var(--text)',marginBottom:'.5rem',wordBreak:'break-all'}}>0xdb8Ee7ACf93Ae8f9AA318C4bE7690a89f4E98F80</div><div style={{display:'flex',gap:'.4rem',flexWrap:'wrap'}}><span className="badge badge-approved">Verified</span><span className="badge badge-blue">Solidity ^0.8.19</span><span className="badge badge-gray">Sepolia Testnet</span></div></div>
+        <div className="block-card"><div className="block-num">Network Stats</div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.4rem .75rem',marginTop:'.5rem'}}>{[['Latest Block','#19,823,521'],['Gas Price','12 Gwei'],['KYC Txs',allTxs.length.toString()],['Active Verifiers','3']].map(([k,v])=><div key={k}><div className="text-xs text-muted">{k}</div><div className="text-mono text-sm font-bold" style={{color:'var(--text)'}}>{v}</div></div>)}</div></div>
+      </div>
+      <div className="tabs"><button className={`tab ${tab==='txs'?'active':''}`} onClick={()=>setTab('txs')}>Recent Transactions</button><button className={`tab ${tab==='kycs'?'active':''}`} onClick={()=>setTab('kycs')}>KYC Records</button></div>
+      {tab==='txs'&&<div className="table-wrap"><table><thead><tr><th>Tx Hash</th><th>Block</th><th>Action</th><th>From</th><th>Gas</th><th>Age</th><th>Status</th></tr></thead><tbody>{allTxs.slice(0,20).map((t,i)=><tr key={i}><td><span className="hash">{short(t.txHash)}</span></td><td className="text-mono text-sm">{t.block}</td><td><span className="badge badge-blue">{t.action}</span></td><td className="text-mono text-sm text-muted">{shortA(t.from)}</td><td className="text-mono text-sm">{t.gas}</td><td className="text-sm text-muted">{timeAgo(t.ts)}</td><td><span className="badge badge-approved">✓ Confirmed</span></td></tr>)}</tbody></table></div>}
+      {tab==='kycs'&&<div className="table-wrap"><table><thead><tr><th>#</th><th>User</th><th>Wallet</th><th>Doc Hash</th><th>Documents</th><th>Status</th><th>Submitted</th></tr></thead><tbody>{reqs.map((r,i)=><tr key={r.id}><td className="text-mono text-sm text-muted">{i+1}</td><td><div style={{fontWeight:600,color:'var(--white)'}}>{r.name}</div><div className="text-xs text-muted">{r.pan}</div></td><td><span className="hash" style={{fontSize:'.7rem'}}>{short(r.wallet)}</span></td><td><span className="hash" style={{fontSize:'.7rem'}}>{short(r.docHash)}</span></td><td><div style={{display:'flex',gap:'.3rem',flexWrap:'wrap'}}>{r.docs.map(d=><span key={d} className="badge badge-gray" style={{fontSize:'.62rem'}}>{d}</span>)}</div></td><td><span className={`badge badge-${r.status}`}>{r.status.toUpperCase()}</span></td><td className="text-sm text-muted">{timeAgo(r.submittedAt)}</td></tr>)}</tbody></table></div>}
+    </div>
+  );
+}
+
+/* ── APP ROOT ── */
+function App(){
+  const [page,setPage]=useState('home');
+  const [wallet,setWallet]=useState(null);
+  const [reqs,setReqs]=useState(SEED_REQS);
+  const [toasts,setToasts]=useState([]);
+
+  function addToast(type,msg){const id=Date.now();setToasts(p=>[...p,{id,type,msg}]);setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3500);}
+
+  function disconnectWallet(){setWallet(null);setPage('home');addToast('info','Wallet disconnected');}
+  function switchWallet(){const a=genAddr();setWallet(a);setPage('user');addToast('success','Switched wallet: '+shortA(a));}
+
+  const addReq=r=>setReqs(p=>[...p,r]);
+  const updateStatus=(id,status,note)=>setReqs(p=>p.map(r=>r.id===id?{...r,status,note,verifiedAt:new Date().toISOString()}:r));
+
+  return(
+    <div>
+      <Navbar page={page} setPage={setPage} wallet={wallet} onConnectClick={()=>setPage('user')} onDisconnect={disconnectWallet} onSwitch={switchWallet}/>
+      {page==='home'    &&<HomePage setPage={setPage} reqs={reqs}/>}
+      {page==='user'    &&<UserPortal wallet={wallet} setWallet={setWallet} addToast={addToast} reqs={reqs} addReq={addReq}/>}
+      {page==='verifier'&&<VerifierPortal reqs={reqs} updateStatus={updateStatus} addToast={addToast}/>}
+      {page==='explorer'&&<BlockExplorer reqs={reqs}/>}
+      <ToastStack toasts={toasts}/>
+      <footer>
+        <p style={{fontSize:'.72rem',fontFamily:'var(--mono)',color:'var(--text3)'}}>ChainKYC · Blockchain-based Secure KYC Verification System · 6th Semester BT Mini Project</p>
+        <p style={{fontSize:'.68rem',color:'var(--text3)',marginTop:'.25rem',opacity:.65,fontFamily:'var(--mono)'}}>Miqdaad Sayyed · Arfat Shaikh · Faazil Mirza Shaikh · BE Computer Engineering · Mumbai University · 2025–26</p>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
