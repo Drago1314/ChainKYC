@@ -4,9 +4,9 @@
 > Mumbai University · Academic Year 2025–26
 
 **Team:**
-- Miqdaad Sayyed — Blockchain Dev
+- Miqdaad Sayyed — Frontend & Integration
 - Arfat Shaikh — Smart Contract & Backend
-- Faazil Mirza Shaikh — Frontend & Integration
+- Faazil Mirza Shaikh — Blockchain Dev
 
 ---
 
